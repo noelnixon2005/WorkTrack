@@ -1,0 +1,15 @@
+{
+  "name": "worktrack",
+  "version": "1.0.0",
+  "description": "Local WorkTrack shift tracker with a Node.js server and SQLite autosave.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22.5.0"
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

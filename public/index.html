@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WorkTrack</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #0d0f14; --surface: #141720; --surface2: #1c2030; --border: #252a3a;
+    --accent-v: #7dd3fc; --accent-v-glow: rgba(125,211,252,0.22); --accent-v-soft: rgba(125,211,252,0.10);
+    --accent-s: #f9a8d4; --accent-s-glow: rgba(249,168,212,0.22); --accent-s-soft: rgba(249,168,212,0.10);
+    --accent-gold: #ffd166; --text: #e8eaf0; --muted: #6b7394; --danger: #ff4757; --safe: #4ade80; --warn: #ffd166;
+  }
+  body { font-family: 'Syne', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+  body::before { content: ''; position: fixed; top: -200px; left: -200px; width: 600px; height: 600px; background: radial-gradient(circle, rgba(125,211,252,0.04) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  body::after { content: ''; position: fixed; bottom: -150px; right: -150px; width: 500px; height: 500px; background: radial-gradient(circle, rgba(249,168,212,0.04) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+  .app { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 32px 20px 80px; }
+  .name-overlay { position: fixed; inset: 0; background: rgba(13,15,20,0.93); backdrop-filter: blur(10px); display: flex; align-items: center; justify-content: center; z-index: 200; animation: fadeIn 0.3s ease; }
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  .name-box { background: var(--surface); border: 1px solid var(--border); border-radius: 22px; padding: 44px 38px; width: 100%; max-width: 400px; text-align: center; box-shadow: 0 28px 70px rgba(0,0,0,0.5); animation: slideUp 0.38s cubic-bezier(0.34,1.56,0.64,1); }
+  @keyframes slideUp { from { transform: translateY(28px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+  .name-icon-big, .logo-icon { background: linear-gradient(135deg, var(--accent-v), #38bdf8); display: flex; align-items: center; justify-content: center; box-shadow: 0 0 30px var(--accent-v-glow); }
+  .name-icon-big { width: 58px; height: 58px; border-radius: 16px; font-size: 28px; margin: 0 auto 20px; }
+  .name-box h2 { font-size: 1.6rem; font-weight: 800; margin-bottom: 6px; }
+  .name-box h2 span, .logo-text h1 span { color: var(--accent-v); }
+  .name-box p { font-size: 0.82rem; color: var(--muted); margin-bottom: 26px; }
+  .name-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; color: var(--text); font-family: 'Syne', sans-serif; font-size: 1.05rem; font-weight: 600; padding: 14px 16px; outline: none; text-align: center; margin-bottom: 14px; transition: border-color 0.2s; }
+  .name-input:focus { border-color: var(--accent-v); }
+  .name-go { width: 100%; background: var(--accent-v); border: none; color: #0d0f14; font-family: 'Syne', sans-serif; font-weight: 800; font-size: 0.98rem; padding: 14px; border-radius: 12px; cursor: pointer; transition: all 0.2s; }
+  .name-go:hover { transform: translateY(-2px); box-shadow: 0 8px 22px var(--accent-v-glow); }
+  header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px; flex-wrap: wrap; gap: 12px; }
+  .logo { display: flex; align-items: center; gap: 14px; }
+  .logo-icon { width: 44px; height: 44px; border-radius: 12px; font-size: 20px; flex-shrink: 0; }
+  .logo-text { display: flex; flex-direction: column; gap: 2px; }
+  .logo-text h1 { font-size: 1.7rem; font-weight: 800; letter-spacing: -0.5px; line-height: 1; }
+  .logo-sub { font-size: 0.71rem; color: var(--muted); font-family: 'DM Mono', monospace; display: flex; align-items: center; gap: 6px; }
+  .logo-sub strong { color: var(--text); font-weight: 600; }
+  .edit-name-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.68rem; font-family: 'DM Mono', monospace; padding: 1px 5px; border-radius: 4px; transition: all 0.2s; text-decoration: underline; text-underline-offset: 2px; }
+  .edit-name-btn:hover { color: var(--accent-v); }
+  .header-right { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .week-nav { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 8px 14px; }
+  .week-nav button { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.1rem; padding: 2px 6px; border-radius: 6px; transition: all 0.2s; }
+  .week-nav button:hover { color: var(--text); background: var(--surface2); }
+  .week-label { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--muted); white-space: nowrap; }
+  .db-status { display: flex; align-items: center; gap: 9px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px 16px; margin-bottom: 22px; font-family: 'DM Mono', monospace; font-size: 0.73rem; color: var(--muted); }
+  .fdot { width: 7px; height: 7px; border-radius: 50%; background: var(--safe); box-shadow: 0 0 7px rgba(74,222,128,0.5); flex-shrink: 0; }
+  .fdot.error { background: var(--danger); box-shadow: 0 0 7px rgba(255,71,87,0.5); }
+  .fpath { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hours-bar-section, .job-card, .pay-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; position: relative; overflow: hidden; }
+  .hours-bar-section { padding: 20px 24px; margin-bottom: 24px; }
+  .hours-bar-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--accent-v), transparent); }
+  .bar-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 14px; flex-wrap: wrap; gap: 6px; }
+  .bar-title, .pay-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); font-weight: 600; }
+  .bar-hours { font-family: 'DM Mono', monospace; font-size: 0.95rem; }
+  .bar-hours .total { font-size: 1.5rem; font-weight: 700; }
+  .safe { color: var(--safe); } .warn { color: var(--warn); } .danger { color: var(--danger); }
+  .bar-track { height: 10px; background: var(--surface2); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; transition: width 0.5s cubic-bezier(0.34,1.56,0.64,1), background 0.3s; }
+  .bar-fill.safe { background: linear-gradient(90deg, var(--safe), #22c55e); box-shadow: 0 0 10px rgba(74,222,128,0.35); }
+  .bar-fill.warn { background: linear-gradient(90deg, var(--warn), #ffab00); box-shadow: 0 0 10px rgba(255,209,102,0.35); }
+  .bar-fill.danger { background: linear-gradient(90deg, var(--danger), #ff2442); box-shadow: 0 0 10px rgba(255,71,87,0.35); }
+  .bar-markers { display: flex; justify-content: space-between; margin-top: 6px; }
+  .bar-marker, .two-week-note, .split-bar-label, .split-bar-hrs { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--muted); }
+  .two-week-note { margin-top: 10px; } .two-week-note strong { color: var(--text); }
+  .split-bars { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 14px; }
+  .split-bar-item { display: flex; align-items: center; gap: 10px; }
+  .split-bar-label { min-width: 60px; } .split-bar-label strong { display: block; font-size: 0.78rem; }
+  .split-bar-track { flex: 1; height: 5px; background: var(--surface2); border-radius: 99px; overflow: hidden; }
+  .sbf-v, .sbf-s { height: 100%; border-radius: 99px; transition: width 0.4s; }
+  .sbf-v { background: var(--accent-v); } .sbf-s { background: var(--accent-s); }
+  .split-bar-hrs { min-width: 36px; text-align: right; }
+  .main-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 24px; }
+  @media (max-width: 640px) { .main-grid, .split-bars { grid-template-columns: 1fr; } }
+  .job-card { padding: 22px; }
+  .job-card.vpeople::before, .job-card.scape::before, .pay-section::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .job-card.vpeople::before { background: linear-gradient(90deg, var(--accent-v), #38bdf8); }
+  .job-card.scape::before { background: linear-gradient(90deg, var(--accent-s), #ec4899); }
+  .job-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 18px; }
+  .job-name { font-size: 1.1rem; font-weight: 700; }
+  .job-name.vpeople { color: var(--accent-v); } .job-name.scape { color: var(--accent-s); }
+  .job-total { font-family: 'DM Mono', monospace; font-size: 0.8rem; color: var(--muted); text-align: right; }
+  .job-total span { display: block; font-size: 1.3rem; font-weight: 600; color: var(--text); }
+  .level-selector { display: flex; gap: 6px; margin-bottom: 14px; }
+  .level-btn { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--muted); font-family: 'DM Mono', monospace; font-size: 0.78rem; font-weight: 500; padding: 7px 6px; border-radius: 8px; cursor: pointer; transition: all 0.2s; text-align: center; }
+  .level-btn:hover, .level-btn.active { border-color: var(--accent-v); color: var(--accent-v); }
+  .level-btn.active { background: var(--accent-v-soft); font-weight: 600; }
+  .level-rate { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted); margin-bottom: 14px; }
+  .level-rate strong { color: var(--accent-gold); }
+  .input-label { font-size: 0.68rem; color: var(--muted); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 1px; }
+  .section-divider { height: 1px; background: var(--border); margin: 6px 0 14px; }
+  .shift-entry { display: flex; gap: 8px; margin-bottom: 14px; }
+  .shift-entry input { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-family: 'DM Mono', monospace; outline: none; transition: border-color 0.2s; }
+  .shift-entry input[type="number"] { flex: 1; font-size: 0.9rem; padding: 10px 12px; width: 100%; }
+  .shift-entry input[type="date"] { flex: 1.4; font-size: 0.78rem; padding: 10px; }
+  .shift-entry input:focus { border-color: var(--accent-v); } .shift-entry input.si:focus { border-color: var(--accent-s); }
+  .shift-entry input[type="date"]::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
+  .add-btn { background: var(--accent-v); border: none; color: #0d0f14; font-family: 'Syne', sans-serif; font-weight: 700; font-size: 0.82rem; padding: 10px 14px; border-radius: 10px; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+  .add-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 16px var(--accent-v-glow); } .add-btn.scape { background: var(--accent-s); } .add-btn.scape:hover { box-shadow: 0 4px 16px var(--accent-s-glow); }
+  .shift-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; padding-right: 2px; }
+  .shift-item { display: flex; align-items: center; justify-content: space-between; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 9px 12px; animation: sIn 0.25s ease; }
+  @keyframes sIn { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
+  .shift-item-left { display: flex; flex-direction: column; gap: 2px; }
+  .shift-date { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); }
+  .shift-hrs { font-family: 'DM Mono', monospace; font-size: 0.88rem; font-weight: 500; }
+  .shift-item-right { display: flex; align-items: center; gap: 8px; }
+  .shift-pay { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--accent-gold); }
+  .shift-level { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--accent-v); background: var(--accent-v-soft); padding: 2px 6px; border-radius: 4px; }
+  .del-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 0.9rem; padding: 2px 4px; border-radius: 4px; transition: all 0.2s; }
+  .del-btn:hover { color: var(--danger); background: rgba(255,71,87,0.1); }
+  .empty-state { font-size: 0.78rem; color: var(--muted); text-align: center; padding: 20px 0; font-style: italic; }
+  .pay-section { padding: 22px 24px; margin-bottom: 24px; }
+  .pay-section::before { background: linear-gradient(90deg, var(--accent-gold), #ffab00); }
+  .pay-title { margin-bottom: 18px; }
+  .pay-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  @media (max-width: 500px) { .pay-grid { grid-template-columns: 1fr 1fr; } }
+  .pay-tile, .v-lvl-tile { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 16px; transition: border-color 0.2s; }
+  .pay-tile:hover { border-color: var(--accent-gold); }
+  .pay-tile-label { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 1.5px; color: var(--muted); margin-bottom: 8px; }
+  .pay-tile-value { font-family: 'DM Mono', monospace; font-size: 1.25rem; font-weight: 500; color: var(--accent-gold); }
+  .pay-tile-sub { font-family: 'DM Mono', monospace; font-size: 0.68rem; color: var(--muted); margin-top: 4px; }
+  .pay-tile.total-tile { border-color: rgba(255,209,102,0.3); background: rgba(255,209,102,0.05); }
+  .pay-tile.total-tile .pay-tile-value { font-size: 1.6rem; }
+  .v-breakdown { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 500px) { .v-breakdown { grid-template-columns: repeat(2, 1fr); } }
+  .v-lvl-tile { border-radius: 10px; padding: 12px; }
+  .v-lvl-label { font-size: 0.65rem; color: var(--accent-v); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 600; }
+  .v-lvl-hrs { font-family: 'DM Mono', monospace; font-size: 0.9rem; }
+  .v-lvl-pay { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--accent-gold); }
+  .toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 20px; font-family: 'DM Mono', monospace; font-size: 0.82rem; opacity: 0; transition: all 0.3s; z-index: 300; pointer-events: none; white-space: nowrap; }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .toast.error { border-color: var(--danger); color: var(--danger); } .toast.success { border-color: var(--safe); color: var(--safe); } .toast.warn { border-color: var(--warn); color: var(--warn); }
+</style>
+</head>
+<body>
+<div class="name-overlay" id="nameOverlay">
+  <div class="name-box">
+    <div class="name-icon-big">⏱</div>
+    <h2>Work<span>Track</span></h2>
+    <p>Enter your name to personalise your dashboard</p>
+    <input class="name-input" id="nameInput" type="text" placeholder="e.g. Noel" maxlength="30" autofocus>
+    <button class="name-go" onclick="saveName()">Let's go →</button>
+  </div>
+</div>
+<div class="app">
+  <header>
+    <div class="logo"><div class="logo-icon">⏱</div><div class="logo-text"><h1>Work<span>Track</span></h1><div class="logo-sub">for <strong id="displayName">—</strong><button class="edit-name-btn" onclick="showNameOverlay()">edit</button></div></div></div>
+    <div class="header-right"><div class="week-nav"><button onclick="changeWeek(-1)">‹</button><span class="week-label" id="weekLabel">—</span><button onclick="changeWeek(1)">›</button></div></div>
+  </header>
+  <div class="db-status"><div class="fdot" id="fdot"></div><span class="fpath" id="fpath">Connecting to local SQLite database...</span></div>
+  <div class="hours-bar-section">
+    <div class="bar-header"><div><div class="bar-title">48-Hour Fortnightly Limit</div><div class="two-week-note">Tracking: <strong id="fortLabel">—</strong></div></div><div class="bar-hours"><span class="total safe" id="fortTotal">0.0</span><span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:0.85rem;"> / 48 hrs</span></div></div>
+    <div class="bar-track"><div class="bar-fill safe" id="fortBar" style="width:0%"></div></div>
+    <div class="bar-markers"><span class="bar-marker">0</span><span class="bar-marker">12</span><span class="bar-marker">24</span><span class="bar-marker">36</span><span class="bar-marker">48hrs</span></div>
+    <div class="split-bars"><div class="split-bar-item"><div class="split-bar-label"><strong style="color:var(--accent-v)">VIPeople</strong> hrs</div><div class="split-bar-track"><div class="sbf-v" id="vBar" style="width:0%"></div></div><div class="split-bar-hrs" id="vFortHrs">0.0</div></div><div class="split-bar-item"><div class="split-bar-label"><strong style="color:var(--accent-s)">Scape</strong> hrs</div><div class="split-bar-track"><div class="sbf-s" id="sBar" style="width:0%"></div></div><div class="split-bar-hrs" id="sFortHrs">0.0</div></div></div>
+  </div>
+  <div class="main-grid">
+    <div class="job-card vpeople"><div class="job-header"><div class="job-name vpeople">VIPeople</div><div class="job-total">This week<span id="vWeekHrs">0.0 hrs</span></div></div><div class="input-label">Pay Level</div><div class="level-selector"><button class="level-btn active" onclick="setVLevel(1,this)">L1</button><button class="level-btn" onclick="setVLevel(2,this)">L2</button><button class="level-btn" onclick="setVLevel(3,this)">L3</button><button class="level-btn" onclick="setVLevel(4,this)">L4</button></div><div class="level-rate">Rate: <strong id="vRateLabel">$32.76/hr</strong></div><div class="input-label">Add Shift</div><div class="shift-entry"><input type="date" id="vDate"><input type="number" id="vHours" placeholder="Hours" min="0.5" max="24" step="0.5"><button class="add-btn" onclick="addShift('v')">+ Add</button></div><div class="section-divider"></div><div class="shift-list" id="vShiftList"><div class="empty-state">No shifts this week</div></div></div>
+    <div class="job-card scape"><div class="job-header"><div class="job-name scape">Scape</div><div class="job-total">This week<span id="sWeekHrs">0.0 hrs</span></div></div><div style="margin-bottom:14px;"><div class="level-rate" style="margin-bottom:0">Rate: <strong style="color:var(--accent-gold)">$32.31/hr</strong></div></div><div class="input-label">Add Shift</div><div class="shift-entry"><input type="date" id="sDate"><input type="number" id="sHours" placeholder="Hours" min="0.5" max="24" step="0.5" class="si"><button class="add-btn scape" onclick="addShift('s')">+ Add</button></div><div class="section-divider"></div><div class="shift-list" id="sShiftList"><div class="empty-state">No shifts this week</div></div></div>
+  </div>
+  <div class="pay-section"><div class="pay-title">💰 Weekly Pay Summary</div><div class="pay-grid"><div class="pay-tile"><div class="pay-tile-label" style="color:var(--accent-v)">VIPeople</div><div class="pay-tile-value" id="vPay">$0.00</div><div class="pay-tile-sub" id="vPayHrs">0.0 hrs</div></div><div class="pay-tile"><div class="pay-tile-label" style="color:var(--accent-s)">Scape</div><div class="pay-tile-value" id="sPay">$0.00</div><div class="pay-tile-sub" id="sPayHrs">0.0 hrs</div></div><div class="pay-tile total-tile"><div class="pay-tile-label">Total Earnings</div><div class="pay-tile-value" id="totalPay">$0.00</div><div class="pay-tile-sub" id="totalHrs">0.0 hrs combined</div></div></div><div class="v-breakdown"><div class="v-lvl-tile"><div class="v-lvl-label">L1 · $32.76</div><div class="v-lvl-hrs" id="l1h">0.0 hrs</div><div class="v-lvl-pay" id="l1p">$0.00</div></div><div class="v-lvl-tile"><div class="v-lvl-label">L2 · $33.98</div><div class="v-lvl-hrs" id="l2h">0.0 hrs</div><div class="v-lvl-pay" id="l2p">$0.00</div></div><div class="v-lvl-tile"><div class="v-lvl-label">L3 · $35.10</div><div class="v-lvl-hrs" id="l3h">0.0 hrs</div><div class="v-lvl-pay" id="l3p">$0.00</div></div><div class="v-lvl-tile"><div class="v-lvl-label">L4 · $36.95</div><div class="v-lvl-hrs" id="l4h">0.0 hrs</div><div class="v-lvl-pay" id="l4p">$0.00</div></div></div></div>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const VRATES = {1:32.76, 2:33.98, 3:35.10, 4:36.95};
+const SRATE = 32.31;
+const MAX = 48;
+let weekStart = getMonday(new Date());
+let vLevel = 1;
+let shifts = [];
+let userName = '';
+let apiReady = false;
+
+async function api(path, options = {}) {
+  const res = await fetch(path, { headers: { 'Content-Type': 'application/json' }, ...options });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({ error: 'Request failed.' }));
+    throw new Error(body.error || 'Request failed.');
+  }
+  return res.status === 204 ? null : res.json();
+}
+
+async function loadState() {
+  try {
+    const state = await api('/api/state');
+    shifts = state.shifts || [];
+    userName = state.userName || '';
+    apiReady = true;
+    updateDbStatus(true);
+    if (userName) {
+      document.getElementById('displayName').textContent = userName;
+      document.getElementById('nameInput').value = userName;
+      document.getElementById('nameOverlay').style.display = 'none';
+    }
+    render();
+  } catch (e) {
+    updateDbStatus(false, e.message);
+    showToast('Database connection failed: ' + e.message, 'error');
+  }
+}
+
+async function saveName() {
+  const v = document.getElementById('nameInput').value.trim();
+  if (!v) return document.getElementById('nameInput').focus();
+  try {
+    const saved = await api('/api/name', { method: 'PUT', body: JSON.stringify({ userName: v }) });
+    userName = saved.userName;
+    document.getElementById('displayName').textContent = userName;
+    document.getElementById('nameOverlay').style.display = 'none';
+    showToast('Name saved automatically.', 'success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+function showNameOverlay() { document.getElementById('nameInput').value = userName; document.getElementById('nameOverlay').style.display = 'flex'; setTimeout(() => document.getElementById('nameInput').focus(), 80); }
+document.getElementById('nameInput').addEventListener('keydown', e => { if (e.key === 'Enter') saveName(); });
+
+function getMonday(d) { const dt = new Date(d), day = dt.getDay(); dt.setDate(dt.getDate() + (day === 0 ? -6 : 1 - day)); dt.setHours(0,0,0,0); return dt; }
+function addDays(d, n) { const r = new Date(d); r.setDate(r.getDate()+n); return r; }
+function isoDate(d) { return d.toISOString().split('T')[0]; }
+function parseISO(s) { const [y,m,day]=s.split('-').map(Number); return new Date(y,m-1,day); }
+function fmtDate(d) { return d.toLocaleDateString('en-AU',{day:'2-digit',month:'short',year:'numeric'}); }
+function fmtShort(d) { return d.toLocaleDateString('en-AU',{weekday:'short',day:'2-digit',month:'short'}); }
+function wEnd(ws) { return addDays(ws,6); }
+function fStart(ws) { return addDays(ws,-7); }
+function changeWeek(dir) { weekStart = addDays(weekStart, dir*7); setDates(); render(); }
+
+function updateDbStatus(ok, msg = '') {
+  const dot = document.getElementById('fdot'), txt = document.getElementById('fpath');
+  dot.className = ok ? 'fdot' : 'fdot error';
+  txt.textContent = ok ? 'SQLite autosave is on — every name, shift add, and delete is saved instantly.' : `Database offline — ${msg}`;
+}
+function setVLevel(n, btn) { vLevel = n; document.querySelectorAll('.level-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); document.getElementById('vRateLabel').textContent = `$${VRATES[n].toFixed(2)}/hr`; }
+
+async function addShift(job) {
+  if (!apiReady) return showToast('Database is not ready yet.', 'error');
+  const dEl = document.getElementById(job==='v'?'vDate':'sDate');
+  const hEl = document.getElementById(job==='v'?'vHours':'sHours');
+  const date = dEl.value, hrs = parseFloat(hEl.value);
+  if (!date) return showToast('Please pick a date.','error');
+  if (!hrs||hrs<=0||hrs>24) return showToast('Hours must be 0.5–24.','error');
+  const ws=weekStart, fs=fStart(ws), fe=wEnd(ws);
+  const forthrs = getHrs(fs,fe) + hrs;
+  try {
+    const shift = await api('/api/shifts', { method: 'POST', body: JSON.stringify({ id: Date.now(), job, date, hrs, level: job==='v'?vLevel:null }) });
+    shifts.push(shift);
+    hEl.value=''; render();
+    if (forthrs > MAX) showToast(`⚠ Over 48hr limit! (${forthrs.toFixed(1)} hrs fortnightly)`,'warn');
+    else showToast('Shift saved automatically!','success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+
+async function deleteShift(id) {
+  try {
+    await api(`/api/shifts/${id}`, { method: 'DELETE' });
+    shifts = shifts.filter(s => s.id !== id);
+    render();
+    showToast('Shift deleted from database.','success');
+  } catch (e) { showToast(e.message, 'error'); }
+}
+function getHrs(s, e, job=null) { return shifts.filter(x => { const d=parseISO(x.date); return d>=s && d<=e && (!job||x.job===job); }).reduce((a,x)=>a+x.hrs, 0); }
+function getShifts(s, e, job) { return shifts.filter(x => { const d=parseISO(x.date); return d>=s&&d<=e&&x.job===job; }).sort((a,b)=>a.date>b.date?-1:1); }
+
+function render() {
+  const ws=weekStart, we=wEnd(ws), fs=fStart(ws);
+  document.getElementById('weekLabel').textContent = `${fmtDate(ws)} – ${fmtDate(we)}`;
+  document.getElementById('fortLabel').textContent = `${fmtDate(fs)} – ${fmtDate(we)}`;
+  const vW=getHrs(ws,we,'v'), sW=getHrs(ws,we,'s');
+  document.getElementById('vWeekHrs').textContent=`${vW.toFixed(1)} hrs`;
+  document.getElementById('sWeekHrs').textContent=`${sW.toFixed(1)} hrs`;
+  const vF=getHrs(fs,we,'v'), sF=getHrs(fs,we,'s'), tot=vF+sF;
+  const pct=Math.min((tot/MAX)*100,100), cls=tot>=MAX?'danger':tot>=40?'warn':'safe';
+  const bar=document.getElementById('fortBar'); bar.style.width=pct+'%'; bar.className='bar-fill '+cls;
+  const lbl=document.getElementById('fortTotal'); lbl.textContent=tot.toFixed(1); lbl.className='total '+cls;
+  document.getElementById('vBar').style.width=Math.min((vF/MAX)*100,100)+'%';
+  document.getElementById('sBar').style.width=Math.min((sF/MAX)*100,100)+'%';
+  document.getElementById('vFortHrs').textContent=vF.toFixed(1);
+  document.getElementById('sFortHrs').textContent=sF.toFixed(1);
+  renderList('v', getShifts(ws,we,'v'));
+  renderList('s', getShifts(ws,we,'s'));
+  renderPay(ws,we);
+}
+function renderList(job, list) {
+  const el=document.getElementById(job==='v'?'vShiftList':'sShiftList');
+  if (!list.length) { el.innerHTML='<div class="empty-state">No shifts this week</div>'; return; }
+  el.innerHTML = list.map(s => { const rate=job==='v'?VRATES[s.level]:SRATE; const pay=(rate*s.hrs).toFixed(2); const lvTag=job==='v'?`<span class="shift-level">L${s.level}</span>`:''; return `<div class="shift-item"><div class="shift-item-left"><span class="shift-date">${fmtShort(parseISO(s.date))}</span><span class="shift-hrs">${s.hrs} hrs</span></div><div class="shift-item-right">${lvTag}<span class="shift-pay">$${pay}</span><button class="del-btn" onclick="deleteShift(${s.id})">✕</button></div></div>`; }).join('');
+}
+function renderPay(ws, we) {
+  let vTotal=0, vTotalHrs=0;
+  [1,2,3,4].forEach(l => { const h=shifts.filter(s=>{const d=parseISO(s.date);return d>=ws&&d<=we&&s.job==='v'&&s.level===l;}).reduce((a,s)=>a+s.hrs,0); const p=h*VRATES[l]; document.getElementById(`l${l}h`).textContent=h.toFixed(1)+' hrs'; document.getElementById(`l${l}p`).textContent='$'+p.toFixed(2); vTotal+=p; vTotalHrs+=h; });
+  const sH=getHrs(ws,we,'s'), sP=sH*SRATE;
+  document.getElementById('vPay').textContent='$'+vTotal.toFixed(2); document.getElementById('vPayHrs').textContent=vTotalHrs.toFixed(1)+' hrs';
+  document.getElementById('sPay').textContent='$'+sP.toFixed(2); document.getElementById('sPayHrs').textContent=sH.toFixed(1)+' hrs';
+  document.getElementById('totalPay').textContent='$'+(vTotal+sP).toFixed(2); document.getElementById('totalHrs').textContent=(vTotalHrs+sH).toFixed(1)+' hrs combined';
+}
+let toastTimer;
+function showToast(msg, type='success') { const t=document.getElementById('toast'); t.textContent=msg; t.className='toast '+type+' show'; clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.classList.remove('show'),3400); }
+function setDates() { const today=isoDate(new Date()), ws=isoDate(weekStart), we=isoDate(wEnd(weekStart)); const d=today>=ws&&today<=we?today:ws; document.getElementById('vDate').value=d; document.getElementById('sDate').value=d; }
+(function init() { setDates(); render(); loadState(); })();
+</script>
+</body>
+</html>
